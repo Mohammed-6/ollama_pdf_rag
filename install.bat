@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 
 :: ============================================================
 ::  Ollama PDF RAG - Full Dependency Installer
-::  Installs: Python packages, chat-ui (npm), web-ui (pnpm)
+::  Installs: Python packages, chat-ui (npm)
 :: ============================================================
 
 set "ROOT=%~dp0"
@@ -86,12 +86,12 @@ if errorlevel 1 (
 for /f "tokens=*" %%v in ('node --version') do call :ok "Found Node.js %%v"
 
 :: ------------------------------------------------------------
-:: 6. chat-ui  (npm)
+:: 6. chat-ui (npm)
 :: ------------------------------------------------------------
 call :section "chat-ui (npm)"
 if not exist "%ROOT%chat-ui\package.json" (
     call :warn "chat-ui\package.json not found, skipping"
-    goto :webui
+    goto :done
 )
 if not exist "%ROOT%chat-ui\.env.local" (
     if exist "%ROOT%chat-ui\.env.local.example" (
@@ -111,48 +111,6 @@ if errorlevel 1 (
 popd
 
 :: ------------------------------------------------------------
-:: 7. web-ui  (pnpm)
-:: ------------------------------------------------------------
-:webui
-call :section "web-ui (pnpm)"
-if not exist "%ROOT%web-ui\package.json" (
-    call :warn "web-ui\package.json not found, skipping"
-    goto :done
-)
-
-:: Ensure pnpm is available
-pnpm --version >nul 2>&1
-if errorlevel 1 (
-    echo   pnpm not found -- installing via npm...
-    npm install -g pnpm --loglevel=error
-    if errorlevel 1 (
-        call :fail "Failed to install pnpm"
-        set /a ERRORS+=1
-        goto :done
-    )
-    call :ok "pnpm installed globally"
-) else (
-    for /f "tokens=*" %%v in ('pnpm --version') do call :ok "Found pnpm %%v"
-)
-
-if not exist "%ROOT%web-ui\.env" (
-    if exist "%ROOT%web-ui\.env.example" (
-        copy "%ROOT%web-ui\.env.example" "%ROOT%web-ui\.env" >nul
-        call :ok "web-ui\.env created from example"
-    )
-)
-echo   Running pnpm install in web-ui...
-pushd "%ROOT%web-ui"
-pnpm install
-if errorlevel 1 (
-    call :fail "pnpm install failed in web-ui"
-    set /a ERRORS+=1
-) else (
-    call :ok "web-ui dependencies installed"
-)
-popd
-
-:: ------------------------------------------------------------
 :: Done
 :: ------------------------------------------------------------
 :done
@@ -165,7 +123,6 @@ if !ERRORS! == 0 (
     echo     1. Edit .env with your secrets
     echo     2. Activate Python venv:   venv\Scripts\activate
     echo     3. Start chat-ui:          cd chat-ui ^&^& npm run dev
-    echo     4. Start web-ui:           cd web-ui  ^&^& pnpm dev
 ) else (
     echo   [!!] Completed with !ERRORS! error(s). Review output above.
 )
