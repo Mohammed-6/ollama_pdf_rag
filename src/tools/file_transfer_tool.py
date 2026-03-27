@@ -4,7 +4,10 @@ import logging
 from langchain_core.tools import tool
 import shutil
 import os
+from dotenv import load_dotenv
 from azure.storage.fileshare import ShareFileClient
+
+load_dotenv()
 
 @tool
 def transfer_file(query_input: str) -> str:
@@ -70,13 +73,16 @@ def transfer_file(query_input: str) -> str:
                 status_lines.append(self.format(record))
 
         if destination == "azure":
+            conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+            share_name = os.getenv("AZURE_STORAGE_SHARE_NAME")
+            file_path_prefix = os.getenv("AZURE_STORAGE_FILE_PATH_PREFIX", "RehanTest")
             with open(source_path, "rb") as f:
-                file_path = f"RehanTest/{file_name}"
+                file_path = f"{file_path_prefix}/{file_name}"
                 if folder_name:
-                    file_path = f"RehanTest/{folder_name}/{file_name}"
+                    file_path = f"{file_path_prefix}/{folder_name}/{file_name}"
                 file_client = ShareFileClient.from_connection_string(
-                    conn_str="DefaultEndpointsProtocol=https;AccountName=daisoxeniastorage;AccountKey=rUNlMuDKXkFTBDHl5brl47NCziVS83M1uMQsz3fhx43njjuhOEspyP7foY2o3bpT8o7fc0CfHwNC+AStkzJUrg==;EndpointSuffix=core.windows.net;",
-                    share_name="xeniafileshare1",
+                    conn_str=conn_str,
+                    share_name=share_name,
                     file_path=file_path
                 )
                 file_client.upload_file(f)
